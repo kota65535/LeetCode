@@ -1,55 +1,89 @@
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 
-class PairSum {
+
+class Triplet {
 public:
-    PairSum(int k, int l, int sum): k(k), l(l), sum(sum) {}
-    int k, l, sum;
+    Triplet(int a, int b, int c) : a(a), b(b), c(c) {}
+    int a, b, c;
 };
+
+class Pair {
+public:
+    Pair(int a, int b) : a(a), b(b) {}
+    int a, b;
+};
+
 
 class Solution {
 public:
-    std::vector<std::vector<int>> fourSum(std::vector<int>& nums, int target) {
-
-        // pairs of all indexes and sum
-        std::vector<PairSum> pair_sums;
-        for (int i = 0 ; i < nums.size() ; i++) {
-            for (int j = i + 1 ; j < nums.size() ; j++) {
-                pair_sums.push_back(PairSum(i, j, nums[i] + nums[j]));
+    // assume sorted
+    std::vector<Pair> twoSum(std::vector<int>::iterator begin, std::vector<int>::iterator end, int target) {
+        std::unordered_map<int, int> complements;
+        std::vector<Pair> ret;
+        end--;
+        while (begin < end) {
+            int sum = *begin + *end;
+            bool incr = false, decr = false;
+            if (sum == target) {
+                ret.push_back(Pair(*begin, *end));
+                incr = decr = true;
+            } else if (sum < target) {
+                incr = true;
+            } else {
+                decr = true;
+            }
+            if (incr) {
+                // increment pointer until difference value appears
+                while (*begin == *(++begin) && begin < end);
+            }
+            if (decr) {
+                // decrement pointer until difference value appears
+                while (*end == *(--end) && begin < end);
             }
         }
+        return ret;
+    }
 
-        // sort by sum
-        std::sort(pair_sums.begin(), pair_sums.end(), [](const PairSum& p1, const PairSum p2) { return p1.sum < p2.sum; });
+    // assume sorted
+    std::vector<Triplet> threeSum(std::vector<int>::iterator begin, std::vector<int>::iterator end, int target) {
+        std::vector<Triplet> ret;
+        for (auto it = begin ; it < end ; it++) {
+            if (it > begin && *it == *(it - 1)) {
+                continue;
+            }
+            int complement = target - *it;
+            std::vector<Pair> pairs = twoSum(it + 1, end, complement);
+            for (Pair p : pairs) {
+                ret.push_back(Triplet(*it, p.a, p.b));
+            }
+        }
+        return ret;
+    }
 
+    std::vector<std::vector<int>> fourSum(std::vector<int> &nums, int target) {
+        std::sort(nums.begin(), nums.end());
         std::vector<std::vector<int>> ret;
-        for (int i = 0 ; i< nums.size() ; i++) {
-            for (int j = i + 1 ; j < nums.size() ; j++) {
-                // rest value for target
-                int rest = target - (nums[i] + nums[j]);
-                // comparator by sum
-                auto cmp = [](const PairSum &p1, const PairSum &p2) { return p1.sum <  p2.sum; };
-                // search all pairs whose sum is equal to the rest
-                auto lb = std::lower_bound(pair_sums.begin(), pair_sums.end(), PairSum(0, 0, rest), cmp);
-                auto ub = std::upper_bound(pair_sums.begin(), pair_sums.end(), PairSum(0, 0, rest), cmp);
-                while (lb < ub) {
-                    // the pair indexes must be greater than j to avoid dups
-                    if (lb != pair_sums.end() && lb->sum == rest && j < lb->k) {
-                        std::vector<int> entry = {nums[i], nums[j], nums[lb->k], nums[lb->l] };
-                        std::sort(entry.begin(), entry.end());
-                        ret.push_back(entry);
-                    }
-                    lb++;
-                }
+        for (int i = 0 ; i < nums.size() ; i++) {
+            if (i > 0 && nums[i] == nums[i-1]) {
+                continue;
+            }
+            int complement = target - nums[i];
+            std::vector<Triplet> triplets = threeSum(nums.begin() + i + 1, nums.end(), complement);
+            for (Triplet t : triplets) {
+                ret.push_back(std::vector<int> {nums[i], t.a, t.b, t.c});
             }
         }
         return ret;
     }
 };
 
+
+
 int main() {
     Solution s;
-    std::vector<int> nums = {-3,-2,-1,0,0,1,2,3};
+    std::vector<int> nums = {0,0,0,0};
 
     for (std::vector<int> v : s.fourSum(nums, 0)) {
         for (int n : v) {
