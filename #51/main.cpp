@@ -63,42 +63,31 @@ class Solution {
 public:
     std::vector<std::vector<std::string>> solveNQueens(int n) {
         Board *initial = new Board(n);
+        std::vector<Board*> final_boards = solve(initial, n, 0);
+        std::vector<std::vector<std::string>> ret(final_boards.size());
+        std::transform(final_boards.begin(), final_boards.end(), ret.begin(), [](const Board *b) { return b->show(); });
+        return ret;
+    }
 
-        std::queue<Board*> q;
-
-        // put the 1st queen on the 1st row
+    std::vector<Board*> solve(Board *board, int n, int n_current) {
+        std::vector<Board*> ret;
+        if (n_current == n) {
+            return std::vector<Board*>();
+        }
         for (int i = 0 ; i < n ; i++) {
-            Board *next_board = initial->put_queen(0, i);
-            q.push(next_board);
-        }
-
-        std::vector<Board*> final_boards;
-
-        if (n == 1) {
-            Board *current = q.front(); q.pop();
-            final_boards.push_back(current);
-        }
-
-        // BFS, where each queens can be put at the any square of the each row
-        while (! q.empty()) {
-            Board *current = q.front(); q.pop();
-            int row = current->n_queens;
-            for (int i = 0 ; i < n ; i++) {
-                if (current->data[row][i] == '.') {
-                    Board *next_board = current->put_queen(row, i);
-                    if (next_board == nullptr) {
-                        continue;
-                    }
-                    if (next_board->n_queens == n) {
-                        final_boards.push_back(next_board);
-                        continue;
-                    }
-                    q.push(next_board);
+            if (board->data[n_current][i] == '.') {
+                Board *next_board = board->put_queen(n_current, i);
+                if (next_board == nullptr) {
+                    continue;
+                }
+                if (next_board->n_queens == n) {
+                    ret.push_back(next_board);
+                }
+                for (auto b : solve(next_board, n, n_current + 1)) {
+                    ret.push_back(b);
                 }
             }
         }
-        std::vector<std::vector<std::string>> ret(final_boards.size());
-        std::transform(final_boards.begin(), final_boards.end(), ret.begin(), [](const Board *b) { return b->show(); });
         return ret;
     }
 };
